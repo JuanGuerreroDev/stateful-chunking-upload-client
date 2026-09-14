@@ -1,0 +1,31 @@
+# ============================================================================
+#  .gitattributes — normalización coherente y multiplataforma.
+#  El repo se desarrolla en Windows pero se publica para todos: se guarda
+#  LF en el repositorio y se evita el "churn" CRLF/LF en los diffs.
+# ============================================================================
+
+# Por defecto: detectar texto y almacenar con LF en el repositorio.
+* text=auto eol=lf
+
+# Scripts POSIX: siempre LF (romperían con CRLF).
+*.sh   text eol=lf
+
+# Scripts de Windows: siempre CRLF.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# Lockfile: es texto, pero generado; sin diff ruidoso.
+pnpm-lock.yaml linguist-generated=true -diff
+
+# Binarios: nunca normalizar ni tratar como texto.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.woff  binary
+*.woff2 binary
+*.pdf   binary
+*.zip   binary
+*.gz    binary

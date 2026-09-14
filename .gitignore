@@ -1,0 +1,47 @@
+# ============================================================================
+#  .gitignore — @juanoecr/stateful-chunking-upload-client
+#  Regla rectora: el repositorio publica el SDK, nada de la maquinaria local
+#  que lo produce. Ver CONTRIBUTING.md ("Higiene del repositorio").
+# ============================================================================
+
+# ---- Node / TypeScript (el repo será un paquete TS con pnpm) ----
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.pnpm-store/
+# Nota: pnpm-lock.yaml SÍ se versiona (no se ignora).
+
+# ---- Variables de entorno / secretos ----
+.env
+.env.*
+!.env.example
+
+# ---- Configuración de Claude / AI-DLC (NO se versiona: seguridad del SDK) ----
+# Toda la maquinaria de asistencia queda fuera del repositorio público.
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+aidlc-docs/
+
+# ---- Configuraciones MCP de IDEs (pueden contener credenciales o PATs) ----
+.mcp.json
+.amp/mcp.json
+.augment/mcp.json
+.codebuddy/mcp.json
+.codex/mcp.json
+.vscode/mcp.json
+.cursor/mcp.json
+.gemini/settings/mcp.json
+.kilocode/mcp.json
+.kiro/settings/mcp.json
+.opencode/mcp.json
+.amazonq/mcp.json
+.windsurf/mcp.json
+.cline/mcp.json
+
+# ---- Sistema operativo / editores ----
+.DS_Store
+Thumbs.db
