@@ -1,0 +1,62 @@
+{
+  "session_not_found": {
+    "status": 404,
+    "body": { "message": "Upload session not found." },
+    "_exception": "SessionNotFoundException",
+    "_classification": "permanent"
+  },
+  "unauthorized": {
+    "status": 403,
+    "body": { "message": "Unauthorized action on chunk session." },
+    "_exception": "UnauthorizedSessionAccessException",
+    "_classification": "permanent"
+  },
+  "session_not_ready": {
+    "status": 409,
+    "body": { "message": "Upload session is not ready for reassembly." },
+    "_exception": "SessionNotReadyException",
+    "_classification": "permanent"
+  },
+  "budget_exceeded": {
+    "status": 413,
+    "body": { "message": "Upload exceeds the declared file size budget." },
+    "_exception": "UploadBudgetExceededException",
+    "_classification": "permanent"
+  },
+  "chunk_index_out_of_bounds": {
+    "status": 422,
+    "body": { "message": "Chunk index is out of bounds for this session." },
+    "_exception": "ChunkIndexOutOfBoundsException",
+    "_classification": "permanent"
+  },
+  "chunk_integrity": {
+    "status": 422,
+    "body": { "message": "Chunk integrity verification failed." },
+    "_exception": "ChunkIntegrityException",
+    "_classification": "permanent"
+  },
+  "input_empty": {
+    "status": 422,
+    "body": { "message": "Chunk content cannot be empty" },
+    "_exception": "(controller input guard)",
+    "_classification": "permanent"
+  },
+  "input_too_large": {
+    "status": 413,
+    "body": { "message": "Chunk payload size (3000000 bytes) exceeds maximum allowed limit (2306867 bytes)." },
+    "_exception": "(controller input guard)",
+    "_classification": "permanent"
+  },
+  "storage_failure": {
+    "status": 500,
+    "body": { "message": "File storage operation failed. Please try again." },
+    "_exception": "StorageFailureException",
+    "_classification": "transient"
+  },
+  "generic": {
+    "status": 400,
+    "body": { "message": "The upload request could not be processed." },
+    "_exception": "ChunkingException (base)",
+    "_classification": "permanent"
+  }
+}

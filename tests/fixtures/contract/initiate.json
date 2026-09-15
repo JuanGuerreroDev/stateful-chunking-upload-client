@@ -1,0 +1,22 @@
+{
+  "status": 201,
+  "body": {
+    "message": "Session initiated successfully",
+    "data": {
+      "session_id": "9f8c1e2a-4b3d-4c5e-8a7f-1234567890ab",
+      "file_name": "video.mp4",
+      "file_size": 5242880,
+      "uploaded_bytes": 0,
+      "total_chunks": 3,
+      "total_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "fingerprint": "video.mp4:5242880:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "status": "pending",
+      "chunks_map": ["pending", "pending", "pending"],
+      "pending_chunks": [0, 1, 2],
+      "created_at": 1789000000,
+      "expires_at": 1789021600,
+      "is_expired": false,
+      "remaining_ttl": 21600
+    }
+  }
+}
