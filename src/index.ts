@@ -1,9 +1,10 @@
 /**
- * Entry point público del paquete (B1 — superficie progresiva, decisión D010/1B).
+ * Entry point público del paquete — browser-safe (B2, decisiones D010/D012).
  *
- * B1 expone SOLO las clases de error y los tipos/puertos que el consumidor
- * necesita para tipar y capturar. El `UploadClient` ensamblador se añadirá en B2,
- * cuando existan los adaptadores.
+ * Expone el núcleo, los adaptadores universales y el caso de uso `uploadFile`.
+ * El adaptador de Node (`NodeByteSource`, que importa `node:fs`) vive en el
+ * subpath `@juanoecr/stateful-chunking-upload-client/node` para que los bundlers
+ * de navegador nunca lo resuelvan (EFF-03, ADR-B2-02).
  */
 
 // Clases de error (runtime): permiten `catch (e) { if (e instanceof ...) }`.
@@ -12,6 +13,7 @@ export {
   ChunkSizeValidationError,
   ChunkSizeMismatchError,
   EmptyFileError,
+  InvalidFileNameError,
   IntegrityError,
   CryptoUnavailableError,
   TransportUnavailableError,
@@ -19,7 +21,17 @@ export {
   SessionExpiredError,
   SessionNotResumableError,
   RetryExhaustedError,
+  UploadHttpError,
 } from './errors';
+
+// Caso de uso principal.
+export { uploadFile } from './application/upload-file';
+export type { UploadFileDeps } from './application/upload-file';
+export type { CompletionResult } from './adapters/http/chunk-http-client';
+
+// Adaptadores universales (browser-safe).
+export { WebCryptoHasher } from './adapters/web-crypto-hasher';
+export { BlobByteSource } from './adapters/blob-byte-source';
 
 // Tipos y puertos (borrados en runtime): contratos que el consumidor provee/observa.
 export type { Transport } from './ports/transport';

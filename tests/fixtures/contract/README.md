@@ -54,3 +54,9 @@ Cada archivo describe una respuesta HTTP completa: `{ "status": <int>, "body": <
    correspondiente. Los mensajes son genéricos por diseño (nunca filtran internals).
 7. **`/status` no lleva `message`** (solo `data`); el resto de éxitos sí.
 8. **`/cancel` no lleva `data`** (solo `message`).
+9. **429 a nivel de middleware:** las rutas están tras el middleware `throttle`
+   (activo por defecto en `routes/api.php`), así que el backend **sí puede emitir
+   `429 Too Many Requests`** por límite de tasa — no es una `ChunkingException` del
+   dominio (por eso no aparece en `errors.json`). El SDK lo mapea a `UploadHttpError`
+   (status 429) en B2; la política de reintento con `Retry-After` vive en B3
+   (ver `classifyError`, que ya clasifica 429 como transitorio).
