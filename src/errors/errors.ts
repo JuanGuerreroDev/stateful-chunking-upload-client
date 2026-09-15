@@ -34,6 +34,15 @@ export class EmptyFileError extends UploadError {
   readonly code = 'ERR_EMPTY_FILE';
 }
 
+/**
+ * `file_name` con forma inválida (charset, longitud o extensión). Fail-fast en
+ * cliente, antes de la red (SEC-04, decisión 1A). La política de extensiones
+ * *prohibidas* la sigue haciendo cumplir el backend (422), no el SDK.
+ */
+export class InvalidFileNameError extends UploadError {
+  readonly code = 'ERR_INVALID_FILE_NAME';
+}
+
 /** Fallo de integridad SHA-256 (chunk o total); fail-closed. US-02. */
 export class IntegrityError extends UploadError {
   readonly code = 'ERR_INTEGRITY';
@@ -70,6 +79,24 @@ export class RetryExhaustedError extends UploadError {
 
   constructor(
     readonly chunkIndex: number,
+    message: string,
+    cause?: unknown,
+  ) {
+    super(message, cause);
+  }
+}
+
+/**
+ * Fallo HTTP sin un mapeo de dominio más específico (ADR-B2-07). Lleva el
+ * `status` para que el consumidor (o la política de reintentos de B3) decida.
+ * Los errores con semántica propia (integridad, sesión expirada) se mapean a su
+ * subclase concreta antes de llegar aquí.
+ */
+export class UploadHttpError extends UploadError {
+  readonly code = 'ERR_HTTP';
+
+  constructor(
+    readonly status: number,
     message: string,
     cause?: unknown,
   ) {
