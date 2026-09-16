@@ -17,6 +17,8 @@ export {
   IntegrityError,
   CryptoUnavailableError,
   TransportUnavailableError,
+  InsecureTransportError,
+  InvalidConcurrencyError,
   CancelledError,
   SessionExpiredError,
   SessionNotResumableError,
@@ -38,5 +40,7 @@ export type { Transport } from './ports/transport';
 export type { ByteSource } from './ports/byte-source';
 export type { Hasher } from './ports/hasher';
 export type { RetryPolicy } from './domain/retry';
+// Política de reintentos por defecto: base para overrides (`{ ...DEFAULT_RETRY_POLICY, maxRetries: 5 }`).
+export { DEFAULT_RETRY_POLICY } from './domain/retry';
 export type { ProgressReporter, DomainEvent } from './domain/events';
 export type { RemoteStatus } from './domain/upload-session';
