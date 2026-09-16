@@ -1,5 +1,6 @@
 import type { Transport } from '../../ports/transport';
 import type { RemoteSnapshot, RemoteStatus } from '../../domain/upload-session';
+import { assertSecureBaseUrl } from '../../domain/secure-url';
 import {
   IntegrityError,
   SessionExpiredError,
@@ -81,11 +82,14 @@ export class ChunkHttpClient {
     baseUrl: string | URL,
     private readonly transport: Transport,
   ) {
+    // Enforcement de esquema seguro (SEC-01, defensa en profundidad): nadie construye
+    // el cliente con un `baseUrl` inseguro, aunque se saltase la validación del borde.
+    assertSecureBaseUrl(baseUrl);
     // Normaliza a string sin barra final para unir rutas de forma predecible.
     this.base = (typeof baseUrl === 'string' ? baseUrl : baseUrl.toString()).replace(/\/+$/, '');
   }
 
-  async initiate(request: InitiateRequest): Promise<InitiateResult> {
+  async initiate(request: InitiateRequest, signal?: AbortSignal): Promise<InitiateResult> {
     const response = await this.transport(this.url('/initiate'), {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
@@ -96,12 +100,13 @@ export class ChunkHttpClient {
         total_hash: request.totalHash,
         fingerprint: request.fingerprint,
       }),
+      signal,
     });
     const data = await this.readData<SessionData>(response);
     return { sessionId: data.session_id, snapshot: toSnapshot(data) };
   }
 
-  async uploadChunk(request: ChunkUploadRequest): Promise<RemoteSnapshot> {
+  async uploadChunk(request: ChunkUploadRequest, signal?: AbortSignal): Promise<RemoteSnapshot> {
     const form = new FormData();
     form.append('session_id', request.sessionId);
     form.append('chunk_index', String(request.chunkIndex));
@@ -117,15 +122,17 @@ export class ChunkHttpClient {
       method: 'POST',
       headers: { accept: 'application/json' },
       body: form,
+      signal,
     });
     return toSnapshot(await this.readData<SessionData>(response));
   }
 
-  async complete(sessionId: string): Promise<CompletionResult> {
+  async complete(sessionId: string, signal?: AbortSignal): Promise<CompletionResult> {
     const response = await this.transport(this.url('/complete'), {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify({ session_id: sessionId }),
+      signal,
     });
     const data = await this.readData<CompletionData>(response);
     return {
@@ -136,6 +143,36 @@ export class ChunkHttpClient {
       computedHash: data.computed_hash,
       verified: data.verified,
     };
+  }
+
+  /**
+   * Consulta el estado de una sesión (US-03/08). Ruta con **path param** UUID
+   * (`GET /status/{sessionId}`); un id malformado no matchea la ruta → 404 →
+   * `SessionExpiredError`. Respalda el método público `status()` y el re-chequeo
+   * de expiración (ADR-B3-05).
+   */
+  async status(sessionId: string, signal?: AbortSignal): Promise<RemoteSnapshot> {
+    const response = await this.transport(this.url(`/status/${encodeURIComponent(sessionId)}`), {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+      signal,
+    });
+    return toSnapshot(await this.readData<SessionData>(response));
+  }
+
+  /**
+   * Cancela y purga una sesión (US-04). `DELETE /cancel/{sessionId}`; el backend
+   * responde `{ message }` **sin `data`**, así que no usamos `readData`. Es
+   * *best-effort*: no lanza ante una respuesta no-OK (el fail-safe de la cancelación
+   * lo maneja `uploadFile`); un fallo de red del propio `fetch` sí se propaga y lo
+   * atrapa el `safeCancel` del llamador.
+   */
+  async cancel(sessionId: string, signal?: AbortSignal): Promise<void> {
+    await this.transport(this.url(`/cancel/${encodeURIComponent(sessionId)}`), {
+      method: 'DELETE',
+      headers: { accept: 'application/json' },
+      signal,
+    });
   }
 
   private url(path: string): string {
@@ -157,7 +194,7 @@ export class ChunkHttpClient {
     return envelope.data;
   }
 
-  /** Mapea un status HTTP a un error tipado (ADR-B2-07; tabla de `logical_design.md` §3). */
+  /** Mapea un status HTTP a un error tipado (ADR-B2-07/ADR-B3-01; `logical_design.md` §7). */
   private async toError(response: Response): Promise<UploadError> {
     const message = await this.readMessage(response);
     switch (response.status) {
@@ -170,8 +207,14 @@ export class ChunkHttpClient {
         // SDK, que controla chunk_index y nunca envía chunks vacíos.
         return new IntegrityError(message);
       default:
-        // 429/5xx (transitorios, reintento en B3) y 4xx sin mapeo específico.
-        return new UploadHttpError(response.status, message);
+        // 429/5xx (transitorios, reintento en B3) y 4xx sin mapeo específico. El
+        // `Retry-After` del 429 viaja en el error para que `decideRetry` lo respete.
+        return new UploadHttpError(
+          response.status,
+          message,
+          undefined,
+          parseRetryAfter(response.headers.get('retry-after')),
+        );
     }
   }
 
@@ -187,6 +230,20 @@ export class ChunkHttpClient {
     }
     return `La petición falló con estado HTTP ${response.status}.`;
   }
+}
+
+/**
+ * Parsea la cabecera `Retry-After` (US-07 AC-5) a milisegundos. Acepta ambas formas
+ * del estándar: delta-seconds (entero) o HTTP-date. Devuelve `undefined` si falta o
+ * es inválida → `decideRetry` cae al backoff exponencial.
+ */
+function parseRetryAfter(value: string | null): number | undefined {
+  if (value === null) return undefined;
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 1000;
+  const dateMs = Date.parse(trimmed);
+  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+  return undefined;
 }
 
 /** SessionData del contrato → `RemoteSnapshot` del dominio (solo campos de la allowlist). */

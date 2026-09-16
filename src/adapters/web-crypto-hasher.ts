@@ -5,7 +5,7 @@ import { CryptoUnavailableError } from '../errors';
  * Adaptador de `Hasher` sobre Web Crypto (US-02, EFF-01, ADR-B2-01).
  *
  * `crypto.subtle.digest('SHA-256', ...)` es el mismo estándar (SubtleCrypto) en
- * navegador y Node ≥18, por lo que no hay ramas por plataforma. Es *one-shot*:
+ * navegador y Node ≥20, por lo que no hay ramas por plataforma. Es *one-shot*:
  * hasheamos un chunk completo por llamada — nunca el archivo entero (el
  * `total_hash` lo aporta el consumidor, ver ADR-B2-01).
  *
@@ -20,7 +20,7 @@ export class WebCryptoHasher implements Hasher {
     const subtle = cryptoImpl?.subtle;
     if (!subtle) {
       throw new CryptoUnavailableError(
-        'Web Crypto (crypto.subtle) no está disponible; se requiere un contexto seguro (HTTPS) o Node ≥18.',
+        'Web Crypto (crypto.subtle) no está disponible; se requiere un contexto seguro (HTTPS) o Node ≥20.',
       );
     }
     this.subtle = subtle;

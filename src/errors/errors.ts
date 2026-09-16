@@ -58,6 +58,21 @@ export class TransportUnavailableError extends UploadError {
   readonly code = 'ERR_TRANSPORT_UNAVAILABLE';
 }
 
+/**
+ * `baseUrl` con esquema de transporte inseguro. Fail-fast en el borde (SEC-01/NFR-02,
+ * D014.3): se permite `https:` siempre y `http:` solo contra loopback
+ * (`localhost`/`127.0.0.1`/`[::1]`); cualquier otro caso se rechaza para no filtrar
+ * bytes ni el `upload_token` en claro. Sin escape hatch.
+ */
+export class InsecureTransportError extends UploadError {
+  readonly code = 'ERR_INSECURE_TRANSPORT';
+}
+
+/** `concurrency` inválido (no entero positivo). Fail-fast client-side. RES-03. */
+export class InvalidConcurrencyError extends UploadError {
+  readonly code = 'ERR_INVALID_CONCURRENCY';
+}
+
 /** Cancelación solicitada por el consumidor (AbortController). US-04. */
 export class CancelledError extends UploadError {
   readonly code = 'ERR_CANCELLED';
@@ -99,6 +114,11 @@ export class UploadHttpError extends UploadError {
     readonly status: number,
     message: string,
     cause?: unknown,
+    /**
+     * Pista de rate-limit extraída de la cabecera `Retry-After` del 429 (US-07 AC-5).
+     * En milisegundos; `undefined` si el backend no la envió → cae al backoff exponencial.
+     */
+    readonly retryAfterMs?: number,
   ) {
     super(message, cause);
   }
