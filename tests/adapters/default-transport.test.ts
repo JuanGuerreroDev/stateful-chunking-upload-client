@@ -9,13 +9,13 @@ describe('resolveTransport (US-06, ADR-B2-03)', () => {
     expect(resolveTransport(injected)).toBe(injected);
   });
 
-  it('cae a globalThis.fetch si no se inyecta (Node ≥18 / navegador)', () => {
+  it('cae a globalThis.fetch si no se inyecta (Node ≥20 / navegador)', () => {
     expect(typeof resolveTransport()).toBe('function');
   });
 
   it('fail-fast con TransportUnavailableError si no hay fetch global', () => {
     const original = globalThis.fetch;
-    // Simula un entorno sin fetch (p. ej. Node <18 sin polyfill).
+    // Simula un entorno sin fetch (p. ej. Node <20 sin polyfill).
     (globalThis as { fetch?: typeof fetch }).fetch = undefined;
     try {
       expect(() => resolveTransport()).toThrow(TransportUnavailableError);

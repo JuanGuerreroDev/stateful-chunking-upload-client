@@ -18,6 +18,6 @@ describe('WebCryptoHasher (US-02)', () => {
   it('fail-fast si no hay crypto.subtle (contexto no seguro)', () => {
     // Un Crypto sin `subtle` simula una página HTTP sin TLS.
     expect(() => new WebCryptoHasher({} as Crypto)).toThrow(CryptoUnavailableError);
-    expect(() => new WebCryptoHasher(undefined)).not.toThrow(); // Node ≥18 sí tiene subtle
+    expect(() => new WebCryptoHasher(undefined)).not.toThrow(); // Node ≥20 expone globalThis.crypto sin flag
   });
 });
