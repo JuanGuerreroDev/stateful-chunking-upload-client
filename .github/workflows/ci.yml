@@ -30,7 +30,14 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
 
+      # El tooling de empaquetado (size-limit 14, attw 0.18) exige Node 22+, pero este job
+      # valida la compatibilidad del SDK en runtime (Node >=18). Relajamos engine-strict SOLO
+      # aquí para que el install no aborte por los engines de esas herramientas —que no se
+      # invocan en este job; viven en "package health" (Node 22, engine-strict activo). El
+      # .npmrc mantiene la política estricta para dev local y publicación.
       - name: Install (frozen lockfile)
+        env:
+          npm_config_engine_strict: "false"
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck (NFR-10)
